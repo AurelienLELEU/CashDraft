@@ -1,0 +1,67 @@
+{
+  "identifier" : "CASHDRAFT-LOCAL-STOREKIT",
+  "nonRenewingSubscriptionGroups" : [ ],
+  "products" : [
+    {
+      "displayPrice" : "14.99",
+      "familyShareable" : false,
+      "internalID" : "CASHDRAFT-PRO-LIFETIME",
+      "localizations" : [
+        { "description" : "Documents illimités à vie.", "displayName" : "CashDraft Pro Lifetime", "locale" : "fr_FR" }
+      ],
+      "productID" : "com.cashdraft.pro.lifetime",
+      "referenceName" : "CashDraft Pro Lifetime",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "CASHDRAFT-CREDITS-20",
+      "localizations" : [
+        { "description" : "20 documents supplémentaires.", "displayName" : "Pack 20 documents", "locale" : "fr_FR" }
+      ],
+      "productID" : "com.cashdraft.credits.20",
+      "referenceName" : "Pack 20 documents",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "groupNumber" : 1,
+      "internalID" : "CASHDRAFT-STUDIO-MONTHLY",
+      "localizations" : [
+        { "description" : "Fonctions Studio, synchronisation iCloud et documents illimités.", "displayName" : "CashDraft Studio mensuel", "locale" : "fr_FR" }
+      ],
+      "productID" : "com.cashdraft.studio.monthly",
+      "recurringSubscriptionPeriod" : "P1M",
+      "referenceName" : "CashDraft Studio mensuel",
+      "subscriptionGroupID" : "CASHDRAFT-STUDIO",
+      "type" : "AutoRenewableSubscription"
+    },
+    {
+      "displayPrice" : "69.99",
+      "familyShareable" : false,
+      "groupNumber" : 1,
+      "internalID" : "CASHDRAFT-STUDIO-YEARLY",
+      "localizations" : [
+        { "description" : "Fonctions Studio, synchronisation iCloud et documents illimités.", "displayName" : "CashDraft Studio annuel", "locale" : "fr_FR" }
+      ],
+      "productID" : "com.cashdraft.studio.yearly",
+      "recurringSubscriptionPeriod" : "P1Y",
+      "referenceName" : "CashDraft Studio annuel",
+      "subscriptionGroupID" : "CASHDRAFT-STUDIO",
+      "type" : "AutoRenewableSubscription"
+    }
+  ],
+  "settings" : { },
+  "subscriptionGroups" : [
+    {
+      "id" : "CASHDRAFT-STUDIO",
+      "localizations" : [
+        { "description" : "Les fonctions avancées CashDraft.", "displayName" : "CashDraft Studio", "locale" : "fr_FR" }
+      ],
+      "name" : "CashDraft Studio"
+    }
+  ],
+  "version" : { "major" : 4, "minor" : 0 }
+}

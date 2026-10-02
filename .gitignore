@@ -1,0 +1,13 @@
+.DS_Store
+.build/
+.build-*/
+.build-device/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+artifacts/*.sqlite
+artifacts/*.xcarchive
+artifacts/*.ipa
+artifacts/
+deliverables/
+tmp/
