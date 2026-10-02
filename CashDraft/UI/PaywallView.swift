@@ -32,11 +32,12 @@ struct PaywallView: View {
 
     @ViewBuilder private func productCard(for id: String, title: String, price: String, subtitle: String, prominent: Bool) -> some View {
         let product = manager.products.first { $0.id == id }
+        let displayPrice = ProcessInfo.processInfo.environment["CASHDRAFT_SHOWCASE_MODE"] == "1" ? price : (product?.displayPrice ?? price)
         Button {
             if let product { Task { await manager.purchase(product, store: store) } }
         } label: {
             VStack(alignment: .leading, spacing: 8) {
-                HStack { Text(title).font(.headline); Spacer(); Text(product?.displayPrice ?? price).font(.title3.bold()) }
+                HStack { Text(title).font(.headline); Spacer(); Text(displayPrice).font(.title3.bold()) }
                 Text(subtitle).font(.subheadline).foregroundStyle(.secondary)
                 if prominent { Label("Le choix le plus simple", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(.mint) }
             }.frame(maxWidth: .infinity, alignment: .leading).padding().background(prominent ? Color.mint.opacity(0.13) : Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16)).overlay { RoundedRectangle(cornerRadius: 16).stroke(prominent ? Color.mint : .clear, lineWidth: 1) }
