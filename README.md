@@ -1,28 +1,10 @@
 # CashDraft
 
-Application iOS de devis et facturation locale, conçue pour les indépendants français.
+Deux applications natives dans un seul dépôt, avec données métier locales et sans serveur CashDraft.
 
-Support et confidentialité : <https://aurelienleleu.github.io/CashDraft/>
+- [iOS](ios/README.md) : projet SwiftUI existant, déplacé sans modification dans `ios/` ; ouvrir `ios/CashDraft.xcodeproj` sur macOS.
+- [Android](android/README.md) : application Kotlin et Jetpack Compose, avec un module métier testable indépendamment du SDK Android.
 
-## Démarrage
+Le déplacement conserve les chemins relatifs internes du projet Xcode. Les documents et anciennes pages GitHub Pages restent dans `ios/docs/` ; leur source de publication doit être adaptée si ce dépôt publie encore ces pages. Le site commun est https://btbu.aurelienleleu.fr/cashdraft/.
 
-Ouvrir `CashDraft.xcodeproj` avec Xcode 16+ puis sélectionner un simulateur iPhone (iOS 17 minimum) ou la destination **My Mac (Mac Catalyst)**. Aucune dépendance externe ni connexion réseau n’est nécessaire.
-
-## Achats intégrés
-
-Les produits App Store Connect sont :
-
-- `com.cashdraft.credits.20` — consommable, 20 émissions de documents ;
-- `com.cashdraft.pro.lifetime` — non-consommable, documents de base illimités ;
-- `com.cashdraft.studio.monthly` — abonnement mensuel Studio ;
-- `com.cashdraft.studio.yearly` — abonnement annuel Studio.
-
-Le fichier `CashDraft/Supporting/CashDraft.storekit` fournit le scénario StoreKit local pour les tests.
-
-Les données métier résident exclusivement dans `Application Support/CashDraft/cashdraft.sqlite`; les sauvegardes sont des fichiers JSON que l’utilisateur choisit de partager ou conserver.
-
-## Limite importante des crédits consommables
-
-Apple ne restaure pas les achats intégrés **consommables** (le pack de 20 crédits) sur un nouvel appareil. La licence Pro Lifetime, elle, est restaurable nativement. Pour garantir la restauration des crédits sur un nouvel appareil tout en évitant les doublons, il faudrait un compte utilisateur et une vérification côté serveur — ce qui modifierait la promesse « 100 % offline ».
-
-Le MVP fait donc le choix sans infrastructure : la licence et les crédits restants sont aussi sauvegardés dans le Keychain. Ils survivent à une réinstallation sur le **même iPhone** ; une sauvegarde JSON permet en plus à l’utilisateur de conserver ses données métier.
+Les fonctions de paiement et de synchronisation sont propres à chaque plateforme : une licence Apple n’est pas automatiquement une licence Google Play et iCloud n’est pas disponible dans l’application Android. Aucun compte, serveur ou transfert automatique des droits d’achat entre stores n’est ajouté.
