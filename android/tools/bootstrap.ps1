@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = Split-Path $PSScriptRoot -Parent
 $tools = Join-Path $root '.toolchain'
+$build = Join-Path $env:LOCALAPPDATA 'CashDraftAndroid/build'
+$env:GRADLE_USER_HOME = Join-Path $env:LOCALAPPDATA 'CashDraftAndroid/gradle'
 [System.IO.Directory]::CreateDirectory($tools) | Out-Null
 
 function Get-VerifiedArchive($Url, $Target, $Checksum) {
@@ -32,9 +34,9 @@ if (!(Test-Path $gradle)) {
     Get-VerifiedArchive 'https://services.gradle.org/distributions/gradle-8.11.1-bin.zip' $archive $checksum
     Expand-Archive $archive $tools
 }
-& $gradle -p $root -PcoreOnly=true :core:test --no-daemon
+& $gradle -p $root "-PlocalBuildRoot=$build" -PcoreOnly=true :core:test --no-daemon
 if ($LASTEXITCODE -ne 0) { throw 'Echec des tests metier.' }
-& $gradle -p $root -PcoreOnly=true wrapper --gradle-version 8.11.1 --no-validate-url --no-daemon
+& $gradle -p $root "-PlocalBuildRoot=$build" -PcoreOnly=true wrapper --gradle-version 8.11.1 --no-validate-url --no-daemon
 if ($LASTEXITCODE -ne 0) { throw 'Echec de la generation du wrapper.' }
 if ($CoreOnly) { return }
 
@@ -49,7 +51,12 @@ if (!(Test-Path $manager)) {
     Move-Item (Join-Path $temporary 'cmdline-tools') (Join-Path $sdk 'cmdline-tools/latest')
 }
 $env:ANDROID_HOME = $sdk
-& $manager --sdk_root=$sdk 'platform-tools' 'platforms;android-36' 'build-tools;35.0.0'
-if ($LASTEXITCODE -ne 0) { throw 'Installation du SDK Android interrompue.' }
-& $gradle -p $root :app:assembleDebug :app:lintDebug --no-daemon
+if (!(Test-Path (Join-Path $sdk 'platforms/android-36/android.jar')) -or !(Test-Path (Join-Path $sdk 'build-tools/35.0.0/aapt2.exe'))) {
+    & $manager --sdk_root=$sdk 'platform-tools' 'platforms;android-36' 'build-tools;35.0.0'
+    if ($LASTEXITCODE -ne 0) { throw 'Installation du SDK Android interrompue.' }
+}
+& $gradle -p $root "-PlocalBuildRoot=$build" :app:assembleDebug :app:lintDebug --no-daemon
 if ($LASTEXITCODE -ne 0) { throw 'Compilation ou lint Android en echec.' }
+$artifacts = Join-Path $root 'artifacts'
+[System.IO.Directory]::CreateDirectory($artifacts) | Out-Null
+Copy-Item (Join-Path $build 'app/outputs/apk/debug/app-debug.apk') (Join-Path $artifacts 'CashDraft-debug.apk') -Force

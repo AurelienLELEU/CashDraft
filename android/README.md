@@ -10,14 +10,16 @@ Ouvrir ce dossier dans Android Studio avec un JDK 17, le SDK Android 36 et les B
 ./gradlew.bat :core:test :app:assembleDebug :app:lintDebug
 ```
 
-Sur Windows, le bootstrap télécharge un JDK 17, Gradle et le SDK dans `.toolchain/`, sans installation globale. Le cache Gradle est placé dans `%LOCALAPPDATA%/CashDraftAndroid/gradle`, hors OneDrive. Les licences Google demandent une acceptation explicite.
+Sur Windows, le bootstrap télécharge un JDK 17, Gradle et le SDK dans `.toolchain/`, sans installation globale. Le cache Gradle est placé dans `%LOCALAPPDATA%/CashDraftAndroid/gradle`, et les sorties de compilation dans `%LOCALAPPDATA%/CashDraftAndroid/build`, hors OneDrive. Les licences Google demandent une acceptation explicite.
 
 ```powershell
 ./tools/bootstrap.ps1 -CoreOnly
 ./tools/bootstrap.ps1
 ```
 
-L'APK de développement se trouve après compilation dans `app/build/outputs/apk/debug/app-debug.apk`. L'installer sur un appareil de test. Cette version n'est ni signée pour publication ni prête pour Google Play ; ne pas versionner les fichiers de signature ou secrets.
+Le bootstrap copie l'APK de développement dans `artifacts/CashDraft-debug.apk`. Une compilation Gradle sans `-PlocalBuildRoot` conserve le chemin `app/build/outputs/apk/debug/app-debug.apk` ; dans un dossier OneDrive, passer `-PlocalBuildRoot="$env:LOCALAPPDATA/CashDraftAndroid/build"` pour éviter les fichiers verrouillés. L'installer sur un appareil de test. Cette version est signée pour le développement, pas pour la production Google Play ; ne pas versionner les fichiers de signature ou secrets.
+
+La version Android 0.2.0 rapproche la présentation des listes iOS : surfaces claires, accent vert, navigation sobre, statuts et montants hiérarchisés. Les données et règles de facturation restent inchangées. Le rendu doit encore être vérifié sur un appareil Android.
 
 ## Fonctions portées
 

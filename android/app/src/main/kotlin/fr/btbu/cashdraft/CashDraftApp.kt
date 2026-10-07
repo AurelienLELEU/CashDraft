@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -22,11 +23,13 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.btbu.cashdraft.core.*
@@ -36,7 +39,25 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-private val colors = lightColorScheme(primary = Color(0xFF17694C), secondary = Color(0xFF9A3655), tertiary = Color(0xFF80651E), surface = Color(0xFFFAFBFA), background = Color(0xFFFAFBFA), surfaceVariant = Color(0xFFE7EEE9))
+private val colors = lightColorScheme(
+    primary = Color(0xFF146B55), onPrimary = Color.White,
+    primaryContainer = Color(0xFFDDF3E9), onPrimaryContainer = Color(0xFF124333),
+    secondary = Color(0xFFB04A34), onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFECE5), onSecondaryContainer = Color(0xFF733221),
+    tertiary = Color(0xFF3E6D8E),
+    background = Color(0xFFF3F4F6), onBackground = Color(0xFF20262C),
+    surface = Color.White, onSurface = Color(0xFF20262C),
+    surfaceVariant = Color(0xFFEBEEF1), onSurfaceVariant = Color(0xFF5B6670),
+    surfaceContainer = Color.White, surfaceContainerHigh = Color(0xFFF3F4F6),
+    surfaceContainerHighest = Color(0xFFEBEEF1), outline = Color(0xFF79848F),
+    outlineVariant = Color(0xFFDCE1E6), surfaceTint = Color.Transparent,
+)
+private val cashTypography = Typography(
+    titleLarge = Typography().titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 23.sp, letterSpacing = 0.sp),
+    titleMedium = Typography().titleMedium.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp),
+    labelLarge = Typography().labelLarge.copy(letterSpacing = 0.sp),
+    labelMedium = Typography().labelMedium.copy(letterSpacing = 0.sp),
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,17 +77,18 @@ fun CashDraftApp(onShare: (ByteArray, String) -> Unit, model: CashViewModel = vi
     val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(model::exportBackup) }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(model::previewBackup) }
 
-    MaterialTheme(colorScheme = colors, typography = Typography()) {
+    MaterialTheme(colorScheme = colors, typography = cashTypography, shapes = Shapes(small = RoundedCornerShape(8.dp), medium = RoundedCornerShape(8.dp))) {
         Scaffold(
+            containerColor = colors.background,
             topBar = {
-                TopAppBar(title = { Text(when (route) {
+                CenterAlignedTopAppBar(title = { Text(when (route) {
                     "clients" -> "Clients"; "catalog" -> "Catalogue"; "settings" -> "Réglages"; "profile" -> "Mon entreprise"; "trash" -> "Corbeille"; "documentEdit" -> "Document"; "clientEdit" -> "Client"; "catalogEdit" -> "Article"; "detail" -> snapshot?.documents?.find { it.id == selectedId }?.number ?: "Document"; else -> "CashDraft"
-                }, maxLines = 1) }, navigationIcon = {
+                }, style = MaterialTheme.typography.titleLarge) }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = colors.surface), navigationIcon = {
                     if (route !in listOf("documents", "clients", "catalog", "settings")) Tool(Icons.AutoMirrored.Filled.ArrowBack, "Retour", !state.busy) { if (editing) leaveEditor = true else home() }
                 })
             },
             bottomBar = {
-                if (route in listOf("documents", "clients", "catalog", "settings")) NavigationBar {
+                if (route in listOf("documents", "clients", "catalog", "settings")) NavigationBar(containerColor = colors.surface, tonalElevation = 0.dp) {
                     listOf(Triple("documents", "Documents", Icons.AutoMirrored.Filled.ReceiptLong), Triple("clients", "Clients", Icons.Default.People), Triple("catalog", "Catalogue", Icons.Default.Inventory2), Triple("settings", "Réglages", Icons.Default.Settings)).forEach { (destination, label, icon) ->
                         NavigationBarItem(selected = route == destination, onClick = { route = destination }, enabled = !state.busy, icon = { Icon(icon, label) }, label = { Text(label, maxLines = 1) })
                     }
@@ -167,20 +189,21 @@ private fun Documents(snapshot: Snapshot, trash: Boolean = false, onOpen: (Billi
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (!trash) item {
             val issued = documents.filter { it.status == DocumentStatus.SENT || it.status == DocumentStatus.PAID }.filter { it.type != DocumentType.CREDIT_NOTE && (it.currencyCode ?: snapshot.profile.currencyCode) == snapshot.profile.currencyCode }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("À encaisser", style = MaterialTheme.typography.labelMedium); Text(money(issued.fold(BigDecimal.ZERO) { total, document -> total.add(document.netToPay) }, snapshot.profile.currencyCode), style = MaterialTheme.typography.headlineSmall, color = colors.primary) }
-                Column(horizontalAlignment = Alignment.End) { Text("Documents", style = MaterialTheme.typography.labelMedium); Text(documents.size.toString(), style = MaterialTheme.typography.headlineSmall) }
+            Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(Modifier.weight(2f), verticalArrangement = Arrangement.spacedBy(6.dp)) { Icon(Icons.Default.AccountBalanceWallet, null, tint = colors.primary); Text(money(issued.fold(BigDecimal.ZERO) { total, document -> total.add(document.netToPay) }, snapshot.profile.currencyCode), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = colors.primary); Text("À encaisser", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant) }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) { Icon(Icons.AutoMirrored.Filled.ReceiptLong, null, tint = colors.tertiary); Text(documents.size.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text("Documents", style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant) }
             }
         }
-        item { OutlinedTextField(search, { search = it }, Modifier.fillMaxWidth(), leadingIcon = { Icon(Icons.Default.Search, null) }, label = { Text("Numéro ou client") }, singleLine = true) }
+        item { OutlinedTextField(search, { search = it }, Modifier.fillMaxWidth(), leadingIcon = { Icon(Icons.Default.Search, null) }, placeholder = { Text("Numéro ou client") }, singleLine = true, shape = RoundedCornerShape(8.dp)) }
         item { LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { items(listOf("Tous") + DocumentStatus.entries.map { it.title }) { status -> FilterChip(filter == status, { filter = status }, label = { Text(status) }) } } }
-        if (shown.isEmpty()) item { Text(if (trash) "La corbeille est vide." else "Aucun document.", Modifier.padding(vertical = 24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (shown.isEmpty()) item { Column(Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) { Icon(if (trash) Icons.Default.DeleteOutline else Icons.AutoMirrored.Filled.ReceiptLong, null, Modifier.size(40.dp), tint = colors.onSurfaceVariant); Text(if (trash) "La corbeille est vide" else "Aucun document", style = MaterialTheme.typography.titleMedium) } }
         items(shown, key = { it.id }) { document ->
-            OutlinedCard(onClick = { onOpen(document) }, modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(document.number.ifBlank { document.type.title }, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text(document.status.title, style = MaterialTheme.typography.labelMedium, color = if (document.status == DocumentStatus.PAID) colors.primary else colors.secondary) }
-                    Text(snapshot.clients.find { it.id == document.clientID }?.displayName ?: "Client non sélectionné", style = MaterialTheme.typography.bodyMedium)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(frenchDate(document.issueDate), style = MaterialTheme.typography.labelMedium); Text(money(document.totalTTC, document.currencyCode ?: snapshot.profile.currencyCode), fontWeight = FontWeight.Medium) }
+            Card(onClick = { onOpen(document) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = colors.surface), shape = RoundedCornerShape(8.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) { Text(document.number.ifBlank { document.type.title }, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f)); Surface(color = if (document.status == DocumentStatus.PAID) colors.primaryContainer else colors.surfaceVariant, shape = RoundedCornerShape(4.dp)) { Text(document.status.title, Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelMedium, color = if (document.status == DocumentStatus.PAID) colors.primary else colors.onSurfaceVariant) } }
+                    Text(snapshot.clients.find { it.id == document.clientID }?.displayName ?: "Client non sélectionné", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    HorizontalDivider(color = colors.outlineVariant)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) { Text(frenchDate(document.issueDate), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant, modifier = Modifier.weight(1f)); Text(money(document.totalTTC, document.currencyCode ?: snapshot.profile.currencyCode), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.End) }
                     if (document.status == DocumentStatus.SENT && document.netToPay.signum() > 0 && Instant.parse(document.dueDate) < Instant.now()) Text("Échéance dépassée · ${frenchDate(document.dueDate)}", style = MaterialTheme.typography.labelMedium, color = colors.secondary)
                 }
             }
@@ -195,8 +218,7 @@ private fun Clients(snapshot: Snapshot, open: (Client) -> Unit) {
         item { Field("Rechercher un client", search) { search = it } }
         if (snapshot.clients.isEmpty()) item { Text("Aucun client.", Modifier.padding(vertical = 24.dp)) }
         items(snapshot.clients.filter { it.displayName.contains(search, true) }.sortedBy { it.displayName.lowercase() }, key = { it.id }) { client ->
-            ListItem(headlineContent = { Text(client.displayName) }, supportingContent = { Text(listOf(client.email, client.address).filter { it.isNotBlank() }.joinToString(" · ")) }, leadingContent = { Icon(Icons.Default.Person, null) }, modifier = Modifier.clickable { open(client) })
-            HorizontalDivider()
+            ListItem(headlineContent = { Text(client.displayName, style = MaterialTheme.typography.titleMedium) }, supportingContent = { Text(listOf(client.email, client.address).filter { it.isNotBlank() }.joinToString(" · ")) }, leadingContent = { Icon(Icons.Default.Person, null, tint = colors.primary) }, trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = colors.onSurfaceVariant) }, modifier = Modifier.padding(top = 8.dp).clip(RoundedCornerShape(8.dp)).clickable { open(client) })
         }
     }
 }
@@ -208,8 +230,7 @@ private fun Catalog(snapshot: Snapshot, open: (CatalogItem) -> Unit) {
         item { Field("Rechercher un article", search) { search = it } }
         if (snapshot.catalog.isEmpty()) item { Text("Aucun article.", Modifier.padding(vertical = 24.dp)) }
         items(snapshot.catalog.filter { it.description.contains(search, true) }.sortedBy { it.description.lowercase() }, key = { it.id }) { item ->
-            ListItem(headlineContent = { Text(item.description) }, supportingContent = { Text("${money(decimal(item.unitPriceHT), snapshot.profile.currencyCode)} HT / ${item.unit} · TVA ${item.vatRate} %") }, modifier = Modifier.clickable { open(item) })
-            HorizontalDivider()
+            ListItem(headlineContent = { Text(item.description, style = MaterialTheme.typography.titleMedium) }, supportingContent = { Text("${money(decimal(item.unitPriceHT), snapshot.profile.currencyCode)} HT / ${item.unit} · TVA ${item.vatRate} %") }, leadingContent = { Icon(Icons.Default.Inventory2, null, tint = colors.tertiary) }, trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = colors.onSurfaceVariant) }, modifier = Modifier.padding(top = 8.dp).clip(RoundedCornerShape(8.dp)).clickable { open(item) })
         }
     }
 }
@@ -415,6 +436,6 @@ private fun Settings(state: AppState, onProfile: () -> Unit, onExport: () -> Uni
         Section("Émissions")
         Text("${state.license.trialRemaining} émissions d'essai restantes · ${state.license.credits} crédits")
         Text("Achats Google Play et synchronisation : non disponibles dans cette version.", style = MaterialTheme.typography.bodySmall)
-        Text("CashDraft Android 0.1.0", style = MaterialTheme.typography.labelSmall)
+        Text("CashDraft Android 0.2.0", style = MaterialTheme.typography.labelSmall)
     }
 }

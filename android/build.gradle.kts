@@ -5,3 +5,7 @@ plugins {
     kotlin("plugin.compose") version "2.1.20" apply false
     kotlin("plugin.serialization") version "2.1.20" apply false
 }
+
+providers.gradleProperty("localBuildRoot").orNull?.let { buildRoot ->
+    subprojects { layout.buildDirectory.set(file("$buildRoot/$name")) }
+}
